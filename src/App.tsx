@@ -1,102 +1,224 @@
+import { useState } from 'react'
+import axios from 'axios'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 function App() {
-  const mostrarSaludo = () => {
-    toast.success('¡Hola Mundo! 🌟', {
-      position: "top-right",
-      autoClose: 3000,
-    })
+  const [dogs, setDogs] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetchDogs = async () => {
+    setLoading(true)
+    try {
+      // Crear 4 promesas para obtener 4 perros a la vez
+      const promises = Array(4).fill(0).map(() => 
+        axios.get('https://dog.ceo/api/breeds/image/random')
+      )
+      
+      // Esperar a que todas las peticiones terminen
+      const responses = await Promise.all(promises)
+      
+      // Extraer las URLs de las imágenes
+      const dogImages = responses.map(response => response.data.message)
+      setDogs(dogImages)
+      
+      toast.success('¡4 perritos obtenidos! 🐶', {
+        position: "top-center"
+      })
+      
+    } catch (error) {
+      console.error('Error:', error)
+      toast.error('❌ Error al cargar los perritos')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const mostrarTipos = () => {
-    toast.info('Este es un mensaje de información ℹ️')
-    toast.success('¡Todo salió bien! ✅')
-    toast.warning('Cuidado con eso ⚠️')
-    toast.error('¡Algo salió mal! ❌')
-    toast('Este es un mensaje por defecto 📝')
-    toast.dark('Este es un mensaje oscuro 🌑')
-    toast('Mensaje personalizado con estilo 🎨', 
-      {
-        style: {
-          background: '#ff4757',
-          color: 'white',
-          fontWeight: 'bold'
-        }
-      }
-    )
+  const clearDogs = () => {
+    setDogs([])
+    toast.info('¡Adiós perritos! 👋')
   }
 
   return (
     <div style={{
       minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #74b9ff, #0984e3)',
+      background: 'linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%)',
       padding: '20px',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: 'Arial, sans-serif',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}>
       <div style={{
         background: 'white',
-        padding: '40px',
-        borderRadius: '15px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-        textAlign: 'center',
-        maxWidth: '400px'
+        borderRadius: '20px',
+        padding: '30px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+        maxWidth: '800px',
+        width: '100%',
+        textAlign: 'center'
       }}>
-        <h1 style={{ 
-          color: '#2d3436', 
-          marginBottom: '10px' 
+        {/* Header */}
+        <h1 style={{
+          color: '#e84393',
+          marginBottom: '10px',
+          fontSize: '2.5rem'
         }}>
-          ¡Hola Mundo! 👋
+          🐶 Galería de Perritos
         </h1>
         
-        <p style={{ 
-          color: '#636e72', 
-          marginBottom: '30px',
-          fontSize: '18px'
+        <p style={{
+          color: '#636e72',
+          fontSize: '18px',
+          marginBottom: '30px'
         }}>
-          Presiona los botones para ver las notificaciones
+          Obteniendo 4 perritos aleatorios con Axios
         </p>
 
-        <button 
-          onClick={mostrarSaludo}
-          style={{
-            background: '#00b894',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            margin: '5px',
-            width: '200px'
-          }}
-        >
-          Saludar 👋
-        </button>
+        {/* Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '15px',
+          justifyContent: 'center',
+          marginBottom: '30px',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={fetchDogs}
+            disabled={loading}
+            style={{
+              background: loading ? '#b2bec3' : '#e84393',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '50px',
+              fontSize: '16px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              minWidth: '160px'
+            }}
+          >
+            {loading ? '🔄 Cargando...' : '📸 Obtener 4 Perritos'}
+          </button>
 
-        <button 
-          onClick={mostrarTipos}
-          style={{
-            background: '#6c5ce7',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            margin: '5px',
-            width: '200px'
-          }}
-        >
-          Ver Ejemplos 🎭
-        </button>
+          {dogs.length > 0 && (
+            <button
+              onClick={clearDogs}
+              style={{
+                background: '#fd79a8',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '50px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                minWidth: '160px'
+              }}
+            >
+              🧹 Limpiar
+            </button>
+          )}
+        </div>
+
+        {/* Dogs Grid */}
+        {dogs.length > 0 && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '15px',
+            marginTop: '20px'
+          }}>
+            {dogs.map((dogUrl, index) => (
+              <div
+                key={index}
+                style={{
+                  background: '#f8f9fa',
+                  borderRadius: '15px',
+                  padding: '10px',
+                  border: '3px solid #ffeaa7'
+                }}
+              >
+                <img 
+                  src={dogUrl} 
+                  alt={`Perrito ${index + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '200px',
+                    objectFit: 'cover',
+                    borderRadius: '10px'
+                  }}
+                />
+                <p style={{
+                  margin: '10px 0 0 0',
+                  color: '#636e72',
+                  fontWeight: 'bold'
+                }}>
+                  Perrito #{index + 1} 🐕
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div style={{
+            margin: '40px 0',
+            padding: '20px'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '10px',
+              animation: 'spin 1s linear infinite'
+            }}>
+              🐶
+            </div>
+            <p style={{ 
+              color: '#636e72',
+              fontSize: '18px'
+            }}>
+              Buscando perritos lindos...
+            </p>
+          </div>
+        )}
+
+        {/* Instructions */}
+        {dogs.length === 0 && !loading && (
+          <div style={{
+            background: '#ffeaa7',
+            padding: '20px',
+            borderRadius: '15px',
+            marginTop: '30px'
+          }}>
+            <p style={{ 
+              color: '#e17055', 
+              margin: 0,
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              💡 Haz clic en "Obtener 4 Perritos" para cargar imágenes aleatorias de perros
+            </p>
+          </div>
+        )}
       </div>
 
-      <ToastContainer />
+      {/* Toast Container */}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        theme="colored"
+      />
+
+      {/* Estilos para animación */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   )
 }
